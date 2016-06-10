@@ -1,6 +1,7 @@
 var name = process.argv[2];
 console.log(name);
 var file = process.argv[3];
+var minFlag = (process.argv[4] == "-minimize");
 var OpenSubtitles = require('opensubtitles-api');
 var OS = new OpenSubtitles('OSTestUserAgent');
 OS.search({
@@ -18,11 +19,18 @@ OS.search({
             if (error) throw error;
             require('zlib').unzip(data, function (error, buffer) {
                 if (error) throw error;
-                var subtitle_content = buffer.toString(subtitles.en.encoding).replace(/[\u200B-\u200D\uFEFF]/g, '');
+                var tmp = buffer.toString(subtitles.en.encoding).replace(/[\u200B-\u200D\uFEFF]/g, '');
+                var subtitle_content;
+                if (minFlag) {
+                  subtitle_content = minimizeSrt(tmp);
+                }else{
+                  subtitle_content = tmp;
+                }
                 console.log('Subtitle content:', subtitle_content);
                 var fs = require('fs');
                 fs.writeFile(file, subtitle_content , function (err) {
-                  console.log(err);
+                  if (err)
+                    console.log(err);
                 });
             });
         });
@@ -32,6 +40,38 @@ OS.search({
 }).catch(function (error) {
     console.error(error);
 });
+
+
+function minimizeSrt(srt) {
+  var newSrt = [];
+
+  var i=0;
+  var lines = srt.replace( /\r\n/g , "\n" ).split('\n');
+//  console.log(lines);
+  do{
+    if (lines[i] == '')break;
+    //lines[i] is a number
+    // console.log(lines[i]);
+    newSrt.push(lines[i]);
+    newSrt.push("\n");
+    i++;
+    //lines[i] is a timespan
+    newSrt.push(lines[i]);
+    newSrt.push("\n");
+    i++;
+    newSrt.push("_");
+    newSrt.push("\n");
+    do{
+      //lines[i] is a sub
+      i++;
+    }while(i<lines.length && lines[i] != '');
+    newSrt.push("\n");
+    i++;
+  } while (i<lines.length);
+
+  return newSrt.join('');
+}
+
 // var OS = require('opensubtitles-api');
 // var OpenSubtitles = new OS({
 //     useragent:'OSTestUserAgent',

@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node app Frozen frozen.srt"
+    "test": "node app Frozen frozen.srt -minimize" 
   },
   "author": "Kazutaka Kurihara",
   "license": "ISC",
